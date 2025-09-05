@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Oxford 3000</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #6e8efb;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <div class="header">
+                <h1>Oxford 3000 Admin Panel</h1>
+                <div>
+                    <button id="add-user-btn" class="btn btn-primary">Add User</button>
+                    <a href="index.html" class="btn btn-primary">Go to App</a>
+                    <button id="reset-vocabulary" class="btn btn-danger">Reset Vocabulary Data</button>
+                </div>
+            </div>
+            
+            <h2>Users Management</h2>
+            <table id="users-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Words Learned</th>
+                        <th>Accuracy</th>
+                        <th>Word Limit</th>
+                        <th>Time Limit (min)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <!-- User data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit User Modal -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Add New User</h2>
+            <form id="user-form">
+                <input type="hidden" id="edit-user-id">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="word-limit">Daily Word Limit</label>
+                    <input type="number" id="word-limit" min="1" max="3000" value="100">
+                </div>
+                <div class="form-group">
+                    <label for="time-limit">Time Limit (minutes)</label>
+                    <input type="number" id="time-limit" min="1" max="240" value="30">
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                    <button type="button" id="cancel-btn" class="btn btn-danger">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button type="button" id="cancel-delete-btn" class="btn btn-primary">Cancel</button>
+                <button type="button" id="confirm-delete-btn" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            STORAGE_KEYS: {
+                VOCABULARY: 'flashcard_vocabulary',
+                USERS: 'flashcard_users'
+            },
+            DEFAULT_TIME_LIMIT: 30 * 60, // 30 minutes in seconds
+            DEFAULT_WORD_LIMIT: 100
+        };
+
+        // DOM elements
+        const userTable = document.getElementById('users-table-body');
+        const addUserBtn = document.getElementById('add-user-btn');
+        const userModal = document.getElementById('user-modal');
+        const userForm = document.getElementById('user-form');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const confirmModal = document.getElementById('confirm-modal');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const resetVocabularyBtn = document.getElementById('reset-vocabulary');
+
+        // State variables
+        let users = [];
+        let userToDelete = null;
+
+        // Load users data
+        async function loadUsers() {
+            try {
+                // Get data from localStorage
+                const storedData = localStorage.getItem(CONFIG.STORAGE_KEYS.USERS);
+                if (storedData) {
+                    users = JSON.parse(storedData);
+                } else {
+                    users = [];
+                }
+            } catch (error) {
+                console.error('Error loading users data:', error);
+                users = [];
+            }
+            
+            renderUserTable();
+        }
+
+        // Render users table
+        function renderUserTable() {
+            userTable.innerHTML = '';
+            
+            if (users.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="6" style="text-align: center;">No users found</td>`;
+                userTable.appendChild(row);
+                return;
+            }
+            
+            users.forEach((user, index) => {
+                const totalAttempts = (user.progress?.correct || 0) + (user.progress?.wrong || 0);
+                const accuracy = totalAttempts === 0 ? 0 : Math.round((user.progress?.correct || 0) / totalAttempts * 100);
+                const timeInMinutes = Math.round((user.timeLimit || CONFIG.DEFAULT_TIME_LIMIT) / 60);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${totalAttempts} words</td>
+                    <td>${accuracy}%</td>
+                    <td>${user.wordLimit || CONFIG.DEFAULT_WORD_LIMIT}</td>
+                    <td>${timeInMinutes}</td>
+                    <td class="action-cell">
+                        <button class="btn btn-primary btn-sm edit-btn" data-index="${index}">Edit</button>
+                        <button class="btn btn-danger btn-sm delete-btn" data-index="${index}">Delete</button>
+                    </td>
+                `;
+                userTable.appendChild(row);
+            });
+            
+            // Attach event listeners to buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => editUser(parseInt(btn.getAttribute('data-index'))));
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => showDeleteConfirmation(parseInt(btn.getAttribute('data-index'))));
+            });
+        }
+
+        // Show add user modal
+        function showAddUserModal() {
+            document.getElementById('modal-title').textContent = 'Add New User';
+            document.getElementById('edit-user-id').value = '';
+            userForm.reset();
+            userModal.style.display = 'flex';
+        }
+
+        // Show edit user modal
+        function editUser(index) {
+            const user = users[index];
+            document.getElementById('modal-title').textContent = 'Edit User';
+            document.getElementById('edit-user-id').value = index;
+            document.getElementById('username').value = user.username;
+            document.getElementById('password').value = user.password;
+            document.getElementById('word-limit').value = user.wordLimit || CONFIG.DEFAULT_WORD_LIMIT;
+            document.getElementById('time-limit').value = Math.round((user.timeLimit || CONFIG.DEFAULT_TIME_LIMIT) / 60);
+            
+            userModal.style.display = 'flex';
+        }
+
+        // Show delete confirmation
+        function showDeleteConfirmation(index) {
+            userToDelete = index;
+            confirmModal.style.display = 'flex';
+        }
+
+        // Save user (add/edit)
+        function saveUser(e) {
+            e.preventDefault();
+            
+            const editIndex = document.getElementById('edit-user-id').value;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const wordLimit = parseInt(document.getElementById('word-limit').value);
+            const timeLimit = parseInt(document.getElementById('time-limit').value) * 60; // Convert to seconds
+            
+            // Validate
+            if (username.length < 3) {
+                alert('Username must be at least 3 characters');
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+            
+            // Check for duplicate username when adding
+            if (editIndex === '' && users.some(user => user.username.toLowerCase() === username.toLowerCase())) {
+                alert('Username already exists');
+                return;
+            }
+            
+            const userData = {
+                username: username,
+                password: password,
+                wordLimit: wordLimit,
+                timeLimit: timeLimit,
+                progress: {
+                    correct: 0,
+                    wrong: 0,
+                    answeredToday: 0,
+                    lastSessionDate: null,
+                    unseenWords: [...Array(3000).keys()] // All word indices
+                }
+            };
+            
+            if (editIndex === '') {
+                // Add new user
+                users.push(userData);
+            } else {
+                // Update existing user
+                const index = parseInt(editIndex);
+                // Keep existing progress data
+                userData.progress = users[index].progress || userData.progress;
+                users[index] = userData;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem(CONFIG.STORAGE_KEYS.USERS, JSON.stringify(users));
+            
+            // Close modal and refresh table
+            userModal.style.display = 'none';
+            renderUserTable();
+        }
+
+        // Delete user
+        function deleteUser() {
+            if (userToDelete !== null) {
+                users.splice(userToDelete, 1);
+                localStorage.setItem(CONFIG.STORAGE_KEYS.USERS, JSON.stringify(users));
+                userToDelete = null;
+                confirmModal.style.display = 'none';
+                renderUserTable();
+            }
+        }
+
+        // Event listeners
+        addUserBtn.addEventListener('click', showAddUserModal);
+        cancelBtn.addEventListener('click', () => userModal.style.display = 'none');
+        cancelDeleteBtn.addEventListener('click', () => confirmModal.style.display = 'none');
+        confirmDeleteBtn.addEventListener('click', deleteUser);
+        userForm.addEventListener('submit', saveUser);
+
+        resetVocabularyBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure? This will reset vocabulary data to the original data.')) {
+                try {
+                    localStorage.removeItem(CONFIG.STORAGE_KEYS.VOCABULARY);
+                    alert('Vocabulary data has been reset!');
+                } catch (error) {
+                    alert('Error resetting vocabulary: ' + error.message);
+                }
+            }
+        });
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+</body>
+</html>
