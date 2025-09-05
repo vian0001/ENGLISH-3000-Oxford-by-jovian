@@ -528,7 +528,7 @@
             </div>
             <div class="accuracy" id="accuracy">Accuracy: 0%</div>
             <div class="user-info">
-                <div class="word-limit">Words left: <span id="words-left">25</span></div>
+                <div class="word-limit">Words left: <span id="words-left">100</span></div>
                 <div class="username">Welcome, <span id="user-display"></span></div>
                 <button class="btn btn-logout" id="btn-logout">Logout</button>
             </div>
@@ -3676,8 +3676,8 @@
         let isFlipped = false;
         let touchStartX = 0;
         let touchEndX = 0;
-        const defaultWordsLimit = 25;
-        const defaultTime = 30 * 60; // 30 minutes in seconds
+        const defaultWordsLimit = 100;
+        const defaultTime = 150 * 60; // 30 minutes in seconds
         let wordsLimit = defaultWordsLimit;
         let wordsAnswered = 0;
         let timerInterval = null;
